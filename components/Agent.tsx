@@ -60,9 +60,22 @@ const Agent = ({
             setIsSpeaking(false);
         };
 
-        const onError = (error: Error) => {
+        // const onError = (error: Error) => {
+        //     console.log("Error:", error);
+        // };
+        const onError = (error: { error: { type: string; msg: any; }; }) => {
             console.log("Error:", error);
-        };
+            
+            // Check if this is an ejection error (normal termination)
+            if (error.error && error.error.type === 'ejected') {
+              console.log("Call ended normally:", error.error.msg);
+              setCallStatus(CallStatus.FINISHED);
+            } else {
+              // Handle other errors
+              console.error("Unexpected error:", error);
+              setCallStatus(CallStatus.INACTIVE);
+            }
+          };
 
         vapi.on("call-start", onCallStart);
         vapi.on("call-end", onCallEnd);
