@@ -90,36 +90,92 @@ export async function getFeedbackByInterviewId(
   return { id: feedbackDoc.id, ...feedbackDoc.data() } as Feedback;
 }
 
+// export async function getLatestInterviews(
+//   params: GetLatestInterviewsParams
+// ): Promise<Interview[] | null> {
+//   const { userId, limit = 20 } = params;
+
+//   const interviews = await db
+//     .collection("interviews")
+//     .orderBy("createdAt", "desc")
+//     .where("finalized", "==", true)
+//     .where("userId", "!=", userId)
+//     .limit(limit)
+//     .get();
+
+//   return interviews.docs.map((doc) => ({
+//     id: doc.id,
+//     ...doc.data(),
+//   })) as Interview[];
+// }
 export async function getLatestInterviews(
   params: GetLatestInterviewsParams
 ): Promise<Interview[] | null> {
   const { userId, limit = 20 } = params;
 
-  const interviews = await db
-    .collection("interviews")
-    .orderBy("createdAt", "desc")
-    .where("finalized", "==", true)
-    .where("userId", "!=", userId)
-    .limit(limit)
-    .get();
+  // Ensure userId is defined
+  if (!userId || userId === "undefined") {
+    console.error("Error: userId is undefined or invalid");
+    return null; // Return null or an empty array if userId is invalid
+  }
 
-  return interviews.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Interview[];
+  try {
+    const interviews = await db
+      .collection("interviews")
+      .orderBy("createdAt", "desc")
+      .where("finalized", "==", true)
+      .where("userId", "!=", userId)  // Ensure this works only when userId is valid
+      .limit(limit)
+      .get();
+
+    return interviews.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Interview[];
+  } catch (error) {
+    console.error("Error fetching latest interviews:", error);
+    return null;  // Gracefully return null on failure
+  }
 }
 
-export async function getInterviewsByUserId(
-  userId: string
-): Promise<Interview[] | null> {
-  const interviews = await db
-    .collection("interviews")
-    .where("userId", "==", userId)
-    .orderBy("createdAt", "desc")
-    .get();
 
-  return interviews.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Interview[];
+// export async function getInterviewsByUserId(
+//   userId: string
+// ): Promise<Interview[]> {
+//   const interviews = await db
+//     .collection("interviews")
+//     .where("userId", "==", userId)
+//     .orderBy("createdAt", "desc")
+//     .get();
+
+//   return interviews.docs.map((doc) => ({
+//     id: doc.id,
+//     ...doc.data(),
+//   })) as Interview[];
+// }
+
+export async function getInterviewsByUserId(userId: string): Promise<Interview[]> {
+  // Check if userId is valid
+  if (!userId || userId === "undefined") {
+    console.error("Error: userId is not valid or undefined");
+    return [];  // Return an empty array if userId is invalid
+  }
+
+  try {
+    const interviews = await db
+      .collection("interviews")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .get();
+
+    return interviews.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Interview[];
+  } catch (error) {
+    console.error("Error fetching interviews by userId:", error);
+    throw error;  // Propagate the error to handle it elsewhere
+  }
 }
+
+
